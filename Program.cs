@@ -75,12 +75,14 @@ namespace ImageBackup
                         long blocksWritten = 0;
                         foreach (var block in ReadSource())
                         {
-                            try {
+                            try
+                            {
                                 dest.Write(block.Bytes, 0, block.Length);
                                 hashes[block.BlockIndex] = block.Hash;
                                 blocksWritten++;
                             }
-                            catch (Exception ex) {
+                            catch (Exception ex)
+                            {
                                 Console.WriteLine($"{hashes.Length}, {block.BlockIndex}, {block.Length}, {ex.Message}");
                             }
                         }
@@ -92,7 +94,8 @@ namespace ImageBackup
             }
             else
             {
-                FileStream dest = null;
+                FileStream incrementalJournal = null;
+                FileStream incrementalData = null;
                 BsonWriter bw = null;
                 JsonSerializer ser = null;
                 var incrementName = IncrementFileName();
@@ -104,25 +107,29 @@ namespace ImageBackup
                         if (!CompareHash(hashes[block.BlockIndex], block.Hash))
                         {
                             changedBlocks++;
-                            if (dest == null)
+                            if (incrementalJournal == null)
                             {
-                                dest = File.OpenWrite(incrementName + "inc.bin");
-                                bw = new BsonWriter(dest);
+                                incrementalJournal = File.OpenWrite(incrementName + "jrnl.bin");
+                                incrementalData = File.OpenWrite(incrementalData + "data.bin");
+                                bw = new BsonWriter(incrementalJournal);
                                 ser = new JsonSerializer();
                                 Console.WriteLine($"Changes detected                       ");
                             }
 
-                            ser.Serialize(bw, block);
+                            ser.Serialize(bw, block, typeof(SourceBlock));
+                            incrementalData.Write(block.Bytes, 0, block.Length);
                         }
-			hashes[block.BlockIndex] = block.Hash;
+                        hashes[block.BlockIndex] = block.Hash;
                     }
                     Console.WriteLine($"{changedBlocks} blocks changed");
                     SaveHashes(hashes, incrementName + "hash.bin");
                 }
                 finally
                 {
-                    if (dest != null)
-                        dest.Dispose();
+                    if (incrementalJournal != null)
+                        incrementalJournal.Dispose();
+                    if (incrementalData != null)
+                        incrementalData.Dispose();
                 }
             }
 
@@ -147,12 +154,12 @@ namespace ImageBackup
             for (int i = 0; ; i++)
             {
                 var path = Path.Combine(settings.BackupDir, $"{settings.FilePrefix}{i:0000}-");
-                if (!File.Exists(path + "inc.bin"))
+                if (!File.Exists(path + "jrnl.bin"))
                     return path;
             }
         }
 
-        private static IEnumerable<SourceBlock> ReadSource()
+        private static IEnumerable<SourceDataBlock> ReadSource()
         {
             var lastUpdate = DateTime.Now.AddSeconds(-10);
             var start = DateTime.Now;
@@ -169,7 +176,7 @@ namespace ImageBackup
                     totalRead += bytesRead;
                     if (bytesRead > 0)
                     {
-                        yield return new SourceBlock {
+                        yield return new SourceDataBlock {
                             Bytes = buffer,
                             Length = bytesRead,
                             Hash = SHA1.Create().ComputeHash(buffer, 0, bytesRead),
@@ -211,9 +218,13 @@ namespace ImageBackup
 
     public class SourceBlock
     {
-        public byte[] Bytes;
         public int Length;
         public byte[] Hash;
         public long BlockIndex;
+    }
+
+    public class SourceDataBlock : SourceBlock
+    {
+        public byte[] Bytes;
     }
 }
