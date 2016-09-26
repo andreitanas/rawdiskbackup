@@ -110,7 +110,7 @@ namespace ImageBackup
                             if (incrementalJournal == null)
                             {
                                 incrementalJournal = File.OpenWrite(incrementName + "jrnl.bin");
-                                incrementalData = File.OpenWrite(incrementalData + "data.bin");
+                                incrementalData = File.OpenWrite(incrementName + "data.bin");
                                 bw = new BsonWriter(incrementalJournal);
                                 ser = new JsonSerializer();
                                 Console.WriteLine($"Changes detected                       ");
@@ -225,6 +225,7 @@ namespace ImageBackup
 
     public class SourceDataBlock : SourceBlock
     {
+        [JsonIgnore]
         public byte[] Bytes;
     }
 }
