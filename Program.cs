@@ -94,10 +94,8 @@ namespace ImageBackup
             }
             else
             {
-                FileStream incrementalJournal = null;
+                List<SourceBlock> journal = null;
                 FileStream incrementalData = null;
-                BsonWriter bw = null;
-                JsonSerializer ser = null;
                 var incrementName = IncrementFileName();
                 try
                 {
@@ -107,27 +105,25 @@ namespace ImageBackup
                         if (!CompareHash(hashes[block.BlockIndex], block.Hash))
                         {
                             changedBlocks++;
-                            if (incrementalJournal == null)
+                            if (journal == null)
                             {
-                                incrementalJournal = File.OpenWrite(incrementName + "jrnl.bin");
+                                journal = new List<SourceBlock>();
                                 incrementalData = File.OpenWrite(incrementName + "data.bin");
-                                bw = new BsonWriter(incrementalJournal);
-                                ser = new JsonSerializer();
                                 Console.WriteLine($"Changes detected                       ");
                             }
 
-                            ser.Serialize(bw, block, typeof(SourceBlock));
+                            journal.Add(block);
                             incrementalData.Write(block.Bytes, 0, block.Length);
+                            block.Bytes = null;
                         }
                         hashes[block.BlockIndex] = block.Hash;
                     }
+                    SaveJournal(journal, incrementName + "jrnl.bin");
                     Console.WriteLine($"{changedBlocks} blocks changed");
                     SaveHashes(hashes, incrementName + "hash.bin");
                 }
                 finally
                 {
-                    if (incrementalJournal != null)
-                        incrementalJournal.Dispose();
                     if (incrementalData != null)
                         incrementalData.Dispose();
                 }
@@ -196,14 +192,17 @@ namespace ImageBackup
             Console.WriteLine();
         }
 
-        private static void SaveHashes(byte[][] hashes, string hashFilePath)
+        private static void SaveJournal(List<SourceBlock> journal, string filePath)
         {
-            var tmpFile = hashFilePath + ".tmp";
-            using (var hashFile = File.OpenWrite(tmpFile))
+            File.WriteAllText(filePath,
+                JsonConvert.SerializeObject(journal, Formatting.Indented));
+        }
+
+        private static void SaveHashes(byte[][] hashes, string filePath)
+        {
+            using (var hashFile = File.OpenWrite(filePath))
                 foreach (var hash in hashes)
                     hashFile.Write(hash, 0, hash.Length);
-
-            File.Move(tmpFile, hashFilePath);
         }
     }
 
