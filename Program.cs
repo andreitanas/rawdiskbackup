@@ -118,7 +118,7 @@ namespace ImageBackup
                         }
                         hashes[block.BlockIndex] = block.Hash;
                     }
-                    SaveJournal(journal, incrementName + "jrnl.bin");
+                    SaveJournal(journal, incrementName + "jrnl.json");
                     Console.WriteLine($"{changedBlocks} blocks changed");
                     SaveHashes(hashes, incrementName + "hash.bin");
                 }
