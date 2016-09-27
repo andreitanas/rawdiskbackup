@@ -187,8 +187,8 @@ namespace ImageBackup
                         (DateTime.Now - lastUpdate).TotalSeconds >= settings.ProgressUpdateSeconds)
                     {
                         var percent = (double)totalRead / size * 100;
-                        var eta = TimeSpan.FromSeconds((DateTime.Now - start).TotalSeconds * (1 - (double)totalRead / size)).ToString("HH:mm:ss");
-                        Console.Write($"{totalRead / 1024 / 1024} MiB, {totalRead / 1024 / 1024 / (DateTime.Now - start).TotalSeconds:0.0} MiB/s, {percent:0.00}% Complete, ETA: {eta}\r");
+                        var eta = TimeSpan.FromSeconds((DateTime.Now - start).TotalSeconds * (1 - (double)totalRead / size));
+                        Console.Write($"{totalRead / 1024 / 1024} MiB, {totalRead / 1024 / 1024 / (DateTime.Now - start).TotalSeconds:0.0} MiB/s, {percent:0.00}% Complete, ETA: {eta.TotalHours}:{eta.Minutes:00}:{eta.Seconds:00}\r");
                         lastUpdate = DateTime.Now;
                     }
                 }
