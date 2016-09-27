@@ -94,6 +94,7 @@ namespace ImageBackup
             }
             else
             {
+                Console.WriteLine("Performing incremental backup. Lookinf for changes...");
                 List<SourceBlock> journal = null;
                 FileStream incrementalData = null;
                 var incrementName = IncrementFileName();
