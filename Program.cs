@@ -189,7 +189,7 @@ namespace ImageBackup
                         var elapsed = DateTime.Now - start;
                         var percent = (double)totalRead / size * 100;
                         var eta = TimeSpan.FromSeconds(size / (totalRead / elapsed.TotalSeconds));
-                        Console.Write($"{totalRead / 1024 / 1024} MiB, {totalRead / 1024 / 1024 / elapsed.TotalSeconds:0.0} MiB/s, {percent:0.00}% Complete, ETA: {(int)eta.TotalHours}:{eta.Minutes:00}:{eta.Seconds:00}\r");
+                        Console.Write($"{totalRead / 1024 / 1024} MiB, {totalRead / 1024 / 1024 / elapsed.TotalSeconds:0.0} MiB/s, {percent:0.00}% Complete, ETA: {(int)eta.TotalHours}:{eta.Minutes:00}:{eta.Seconds:00}     \r");
                         lastUpdate = DateTime.Now;
                     }
                 }
