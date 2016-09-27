@@ -165,6 +165,10 @@ namespace ImageBackup
 
             using (var source = File.OpenRead(settings.DeviceFile))
             {
+                source.Seek(0, SeekOrigin.End);
+                long size = source.Position;
+                source.Seek(0, SeekOrigin.Begin);
+
                 int bytesRead;
                 do
                 {
@@ -182,7 +186,9 @@ namespace ImageBackup
                     if (bytesRead < settings.BlockSizeKB * 1024 || settings.ProgressUpdateSeconds > 0 &&
                         (DateTime.Now - lastUpdate).TotalSeconds >= settings.ProgressUpdateSeconds)
                     {
-                        Console.Write($"{totalRead / 1024 / 1024} MiB, {totalRead / 1024 / 1024 / (DateTime.Now - start).TotalSeconds:0.0} MiB/s\r");
+                        var percent = (double)totalRead / size * 100;
+                        var eta = TimeSpan.FromSeconds((DateTime.Now - start).TotalSeconds * (1 - (double)totalRead / size));
+                        Console.Write($"{totalRead / 1024 / 1024} MiB, {totalRead / 1024 / 1024 / (DateTime.Now - start).TotalSeconds:0.0} MiB/s, {percent:0.00}% Complete, ETA: {eta:HH:mm:ss}\r");
                         lastUpdate = DateTime.Now;
                     }
                 }
